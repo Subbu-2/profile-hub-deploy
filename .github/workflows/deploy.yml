@@ -56,12 +56,13 @@ jobs:
             APP_ENV=prod
             AWS_REGION=us-east-2
             DDB_TABLE=profilehub-prod
-
+            APP_PORT=${{ secrets.APP_PORT }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_ISSUER=${{ secrets.JWT_ISSUER }}
             JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
             JWT_TTL_SECONDS=${{ secrets.JWT_TTL_SECONDS }}
-
+            DEMO_USERNAME=${{ secrets.DEMO_USERNAME }}
+            DEMO_PASSWORD=${{ secrets.DEMO_PASSWORD }}
             LOG_LEVEL=${{ secrets.LOG_LEVEL }}
             LOG_ENCODING=${{ secrets.LOG_ENCODING }}
 
