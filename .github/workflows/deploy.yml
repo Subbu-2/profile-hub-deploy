@@ -50,7 +50,7 @@ jobs:
                   - go-api
                 restart: unless-stopped
             EOF
-
+            chmod 600 docker-compose.yml
             # Write .env.prod (secrets + tags)
             cat > .env.prod << EOF
             APP_ENV=prod
