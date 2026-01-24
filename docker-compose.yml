@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  go-api:
+    image: sthireveedhi/goapi:${GO_API_TAG}
+    container_name: go-api
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env.prod
+    restart: unless-stopped
+
+  ui:
+    image: sthireveedhi/profile-hub-ui:${UI_TAG}
+    container_name: profile-hub-ui
+    ports:
+      - "80:80"
+    depends_on:
+      - go-api
+    restart: unless-stopped

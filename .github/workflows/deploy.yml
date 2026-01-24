@@ -1,0 +1,82 @@
+name: Deploy Profile Hub (prod)
+
+on:
+  workflow_dispatch:
+    inputs:
+      go_api_tag:
+        description: "Docker tag for go-api (e.g., prod-abc1234)"
+        required: true
+      ui_tag:
+        description: "Docker tag for ui (e.g., prod-def5678)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/profile-hub
+
+            # Write docker-compose.yml (single source of truth)
+            cat > docker-compose.yml << 'EOF'
+            version: "3.8"
+
+            services:
+              go-api:
+                image: sthireveedhi/goapi:${GO_API_TAG}
+                container_name: go-api
+                ports:
+                  - "8085:8085"
+                env_file:
+                  - .env.prod
+                restart: unless-stopped
+
+              ui:
+                image: sthireveedhi/profile-hub-ui:${UI_TAG}
+                container_name: profile-hub-ui
+                ports:
+                  - "80:80"
+                depends_on:
+                  - go-api
+                restart: unless-stopped
+            EOF
+
+            # Write .env.prod (secrets + tags)
+            cat > .env.prod << EOF
+            APP_ENV=prod
+            AWS_REGION=us-east-2
+            DDB_TABLE=profilehub-prod
+
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_ISSUER=${{ secrets.JWT_ISSUER }}
+            JWT_AUDIENCE=${{ secrets.JWT_AUDIENCE }}
+            JWT_TTL_SECONDS=${{ secrets.JWT_TTL_SECONDS }}
+
+            LOG_LEVEL=${{ secrets.LOG_LEVEL }}
+            LOG_ENCODING=${{ secrets.LOG_ENCODING }}
+
+            GO_API_TAG=${{ inputs.go_api_tag }}
+            UI_TAG=${{ inputs.ui_tag }}
+            EOF
+
+            chmod 600 .env.prod
+
+            # Export compose-time vars for this shell
+            set -a
+            source ./.env.prod
+            set +a
+
+            docker compose down
+            docker compose pull
+            docker compose up -d
+            docker image prune -f
