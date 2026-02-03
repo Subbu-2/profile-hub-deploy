@@ -45,7 +45,7 @@ jobs:
                 image: sthireveedhi/profile-hub-ui:${UI_TAG}
                 container_name: profile-hub-ui
                 ports:
-                  - "80:80"
+                  - "127.0.0.1:8080:80"
                 depends_on:
                   - go-api
                 restart: unless-stopped
